@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, FormEvent } from 'react';
-import { signOut } from "firebase/auth";
-import { auth } from "../firebaseConfig";
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from "./TagHamilton.module.css";
+import { signOut } from "firebase/auth";
+import { auth, db } from "../firebaseConfig";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const TagHamilton: React.FC = () => {
@@ -12,6 +13,7 @@ const TagHamilton: React.FC = () => {
   const [resultado_tag, setResultado] = useState<number | null>(null);
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState('');
+  const [cns, setCns] = useState<string>('');
 
   const perguntas = [
     {
@@ -72,6 +74,20 @@ const TagHamilton: React.FC = () => {
     }
   ];
 
+  useEffect(() => {
+    const fetchCns = async () => {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        const userDoc = await getDoc(doc(db, "usuarios", userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setCns(userData?.cns || '');
+        }
+      }
+    };
+    fetchCns();
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setRespostas((prevRespostas) => ({
@@ -86,7 +102,12 @@ const TagHamilton: React.FC = () => {
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     setResultado(pontos);
 
-    await salvarResultado("TagHamilton", pontos);
+    if (!cns) {
+      console.error("CNS não encontrado para o usuário");
+      return;
+    }
+
+    await salvarResultado(cns,"TagHamilton", pontos);
 
     router.push('/ERSM_SESA');
   }; 

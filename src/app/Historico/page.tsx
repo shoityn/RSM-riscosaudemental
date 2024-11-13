@@ -3,30 +3,47 @@
 import React, { useEffect, useState } from 'react';
 import { signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useRouter } from 'next/navigation';
 import styles from "./Historico.module.css";
 
 const Historico: React.FC = () => {
   const [resultados, setResultados] = useState<{ cns: string; data: string; testes: { nome: string; valor: number; risco: string }[] }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   
   useEffect(() => {
     const carregarResultados = async () => {
-      const querySnapshot = await getDocs(collection(db, "resultados"));
-      const resultadosCarregados = querySnapshot.docs.map(doc => ({
-        cns: doc.data().cns,
-        data: doc.data().data.toDate().toLocaleDateString(),
-        testes: [
-          { nome: "PHQ", valor: doc.data().PHQ_valor, risco: doc.data().PHQ_risco },
-          { nome: "TagHamilton", valor: doc.data().TagHamilton_valor, risco: doc.data().TagHamilton_risco },
-          { nome: "ERSM_SESA", valor: doc.data().ERSM_SESA_valor, risco: doc.data().ERSM_SESA_risco }
-        ]
-      }));
-      setResultados(resultadosCarregados);
+      const cnsAtual = sessionStorage.getItem('cns');
+  
+      if (!cnsAtual) {
+        router.push('/');
+        return;
+      }
+      
+      try {
+        const resultadosQuery = query(collection(db, "resultados"), where("cns", "==", cnsAtual));
+        const querySnapshot = await getDocs(resultadosQuery);
+        
+        const resultadosCarregados = querySnapshot.docs.map(doc => ({
+          cns: doc.data().cns,
+          data: doc.data().data.toDate().toLocaleDateString(),
+          testes: [
+            { nome: "PHQ", valor: doc.data().PHQ_valor, risco: doc.data().PHQ_risco },
+            { nome: "TagHamilton", valor: doc.data().TagHamilton_valor, risco: doc.data().TagHamilton_risco },
+            { nome: "ERSM_SESA", valor: doc.data().ERSM_SESA_valor, risco: doc.data().ERSM_SESA_risco }
+          ]
+        }));
+        
+        setResultados(resultadosCarregados);
+      } catch (error) {
+        console.error("Erro ao carregar resultados:", error);
+      } finally {
+        setIsLoading(false); // Finaliza o carregamento, independentemente do sucesso ou falha
+      }
     };
-
+  
     carregarResultados();
   }, []);
 
@@ -54,7 +71,9 @@ const Historico: React.FC = () => {
 
       <div className={styles.container}>
         <h1 className={styles.tituloHistorico}>Histórico de Resultados</h1>
-        {resultados.length === 0 ? (
+        {isLoading ? (
+          <p className={styles.loadingMessage}>Carregando resultados...</p>
+        ) : resultados.length === 0 ? (
           <p className={styles.emptyMessage}>Nenhum resultado encontrado.</p>
         ) : (
           resultados.map((resultado, index) => (

@@ -3,6 +3,8 @@
 import { useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
+import { db } from "./firebaseConfig";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import styles from "./page.module.css";
 
 const Home: React.FC = () => {
@@ -12,13 +14,12 @@ const Home: React.FC = () => {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
-    const formattedValue = value.replace(/(\d{3})(\d{4})(\d{4})(\d{4})?/, '$1 $2 $3 $4')
-            .trim();
+    const formattedValue = value.replace(/(\d{3})(\d{4})(\d{4})(\d{4})?/, '$1 $2 $3 $4').trim();
     setCns(formattedValue);
-    setError(''); // Limpa o erro ao alterar o input
+    setError('');
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const regex = /^\d{3} \d{4} \d{4} \d{4}$/;
@@ -27,7 +28,23 @@ const Home: React.FC = () => {
       return;
     }
 
-    router.push(`/PHQ?cns=${cns}`);
+    try {
+      const userDocRef = doc(db, "usuarios", cns);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        router.push(`/PHQ?cns=${cns}`);
+      } else {
+        await setDoc(userDocRef, {
+          cns: cns,
+        });
+
+        router.push(`/PHQ?cns=${cns}`);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar o CNS:", error);
+      setError('Erro ao salvar o CNS.');
+    }
   };
 
   return (
@@ -36,9 +53,9 @@ const Home: React.FC = () => {
         <title>Risco Saúde Mental</title>
       </Head>
       
-        <header className={styles.header}>
-          <h1 className={styles.title}>Risco Saúde Mental</h1>
-        </header>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Risco Saúde Mental</h1>
+      </header>
 
       <div className={styles.container}>
         <div className={styles.overlay}></div>
@@ -52,7 +69,8 @@ const Home: React.FC = () => {
               onChange={handleChange}
               maxLength={18}
               className={styles.input}
-            /><br></br>
+            />
+            <br />
             {error && <p className={styles.error}>{error}</p>}
             <button type="submit" className={styles.button}>Fazer Teste</button>
           </form>

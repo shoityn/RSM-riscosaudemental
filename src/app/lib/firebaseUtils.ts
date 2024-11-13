@@ -1,15 +1,17 @@
-import { collection, addDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
-export const salvarResultado = async (tipo: string, valor: number) => {
+export const salvarResultado = async (cns: string, tipo: string, valor: number) => {
   try {
-    const docRef = await addDoc(collection(db, "resultados"), {
-      tipo,
-      valor,
+    const docRef = doc(db, "resultados", cns);
+
+    await setDoc(docRef, {
+      [tipo]: valor,
       data: new Date(),
-    });
-    console.log("Documento salvo com ID: ", docRef.id);
+    }, { merge: true });
+    
+    console.log("Resultado salvo com sucesso no documento do usuário:", cns);
   } catch (e) {
-    console.error("Erro ao adicionar documento: ", e);
+    console.error("Erro ao salvar resultado:", e);
   }
 };
