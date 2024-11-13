@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from 'react';
-import { signOut } from "firebase/auth";
-import { auth } from "../firebaseConfig";
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from "./ERSM.module.css"; 
+import { signOut } from "firebase/auth";
+import { auth, db } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const ERSM_SESA: React.FC = () => {
@@ -12,6 +13,7 @@ const ERSM_SESA: React.FC = () => {
   const [resultado_ersm, setResultado] = useState<number | null>(null);
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState('');
+  const [cns, setCns] = useState<string>('');
 
   const valoresSim = [4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 4, 10, 4, 6, 8, 4, 4, 4, 8, 8, 6, 8, 2, 10, 8, 8, 8, 6, 8, 4, 4, 4, 4, 8, 2, 5, 4, 4, 4, 4, 4, 2, 6, 6, 4, 2, 2, 4, 6, 2];
 
@@ -131,6 +133,20 @@ const ERSM_SESA: React.FC = () => {
     ],
   }
 
+  useEffect(() => {
+    const fetchCns = async () => {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        const userDoc = await getDoc(doc(db, "usuarios", userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setCns(userData?.cns || '');
+        }
+      }
+    };
+    fetchCns();
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setRespostas((prevRespostas) => ({
@@ -145,7 +161,12 @@ const ERSM_SESA: React.FC = () => {
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     setResultado(pontos);
 
-    await salvarResultado("ERSM_SESA", pontos);
+    if (!cns) {
+      console.error("CNS não encontrado para o usuário");
+      return;
+    }
+
+    await salvarResultado(cns,"ERSM_SESA", pontos);
 
     router.push('/Historico');
   };
@@ -153,7 +174,7 @@ const ERSM_SESA: React.FC = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push('/'); // Redireciona para a página de login
+      router.push('/');
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }

@@ -1,19 +1,20 @@
 "use client";
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from "./PHQ.module.css";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const PHQ: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_phq, setResultado] = useState<number | null>(null);
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState('');
+  const [cns, setCns] = useState<string>('');
 
-  const perguntas = [  
+  const perguntas = [
     "1. Pouco interesse ou pouco prazer em fazer as coisas:",
 
     "2. Se sentir para baixo, deprimido ou sem perspectiva:",
@@ -26,12 +27,26 @@ const PHQ: React.FC = () => {
 
     "6. Se sentir mal contigo mesmo(a) - ou achar que você é um fracasso ou que decepcionou sua família ou você mesmo(a):",
 
-    "7. Dificuldade para se concentrar nas coisas, como ler o jornal ou ver telivisão:",
-
+    "7. Dificuldade para se concentrar nas coisas, como ler o jornal ou ver televisão:",
+    
     "8. Lentidão para se movimentar ou falar, a ponto das outras pessoas perceberem? Ou o oposto - estar tão agitado(a) ou irrequieto(a) que você fica andando de um lado para o outro muito mais do que de costume:",
-
+    
     "9. Pensar em se ferir de alguma maneira ou que seria melhor estar morto(a):"
-  ];  
+  ];
+
+  useEffect(() => {
+    const fetchCns = async () => {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        const userDoc = await getDoc(doc(db, "usuarios", userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setCns(userData?.cns || ''); // Obtendo o CNS do Firestore
+        }
+      }
+    };
+    fetchCns();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,15 +62,24 @@ const PHQ: React.FC = () => {
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     setResultado(pontos);
 
-    await salvarResultado("PHQ", pontos);
-
-    router.push('/TagHamilton');
+    if (!cns) {
+      console.error("CNS não encontrado para o usuário");
+      return;
+    }
+  
+    try {
+      await salvarResultado(cns, "PHQ", pontos);
+    
+      router.push('/TagHamilton');
+    } catch (error) {
+      console.error("Erro ao salvar o resultado:", error);
+    }
   };
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push('/'); // Redireciona para a página de login
+      router.push('/'); // Redirecionando para a página inicial após logout
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
@@ -64,29 +88,31 @@ const PHQ: React.FC = () => {
   return (
     <> 
       <header className={styles.header}>
-            <h1 className={styles.title}>Risco Saúde Mental</h1>
-            <nav className={styles.nav}>
-              <ul>
-                <li><a href="/Historico">Histórico</a></li>
-                <li><a href="/PHQ">Novo Teste</a></li>
-                <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
-              </ul>
-            </nav>
+        <h1 className={styles.title}>Risco Saúde Mental</h1>
+        <nav className={styles.nav}>
+          <ul>
+            <li><a href="/Historico">Histórico</a></li>
+            <li><a href="/PHQ">Novo Teste</a></li>
+            <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
+          </ul>
+        </nav>
       </header>
 
       <div className={styles.container}>
-      <h1 className={styles.tituloTabela}>Tabela PHQ-9</h1>
+        <h1 className={styles.tituloTabela}>Tabela PHQ-9</h1>
         <fieldset className={styles.fieldsets}>
-          <h1 className={styles.subTituloTabela}>Durante as últimas 2 semanas, com que frequência você foi incomodado(a) por qualquer um dos problemas abaixo?</h1>
+          <h1 className={styles.subTituloTabela}>
+            Durante as últimas 2 semanas, com que frequência você foi incomodado(a) por qualquer um dos problemas abaixo?
+          </h1>
           
           <form onSubmit={handleSubmit}>
             {perguntas.map((pergunta, index) => (
               <div key={index} className={styles.questao}>
                 <p>{pergunta}</p>
                 {["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"].map((valor, idx) => (
-
-                  <label className={styles.label}  key={valor}>
-                    <input className={styles.input}
+                  <label className={styles.label} key={valor}>
+                    <input 
+                      className={styles.input}
                       type="radio"
                       name={`pergunta${index + 1}`}
                       value={idx}
@@ -103,7 +129,7 @@ const PHQ: React.FC = () => {
           </form>
         </fieldset>
       </div>
-  </> 
+    </>
   );
 };
 
