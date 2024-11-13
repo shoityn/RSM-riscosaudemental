@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, FormEvent } from 'react';
+import { signOut } from "firebase/auth";
+import { auth } from "../firebaseConfig";
 import { useRouter } from 'next/navigation';
 import styles from "./TagHamilton.module.css";
+import { salvarResultado } from "../lib/firebaseUtils";
 
 const TagHamilton: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_tag, setResultado] = useState<number | null>(null);
   const router = useRouter();
+  const [selectedOption, setSelectedOption] = useState('');
 
   const perguntas = [
     {
@@ -76,14 +80,25 @@ const TagHamilton: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     setResultado(pontos);
 
-    //router.push('/');
+    await salvarResultado("TagHamilton", pontos);
+
+    router.push('/ERSM_SESA');
   }; 
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/'); // Redireciona para a página de login
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
+  };
 
   return (
     <> 
@@ -91,16 +106,16 @@ const TagHamilton: React.FC = () => {
             <h1 className={styles.title}>Risco Saúde Mental</h1>
             <nav className={styles.nav}>
               <ul>
-                <li><a href="">Histórico</a></li>
-                <li><a href="">Novo Teste</a></li>
-                <li>Sair</li>
+                <li><a href="/Historico">Histórico</a></li>
+                <li><a href="/PHQ">Novo Teste</a></li>
+                <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
               </ul>
             </nav>
       </header>
 
       <div className={styles.container}>
+      <h1 className={styles.tituloTabela}>Tabela de Transtorno de Ansiedade Generalizada (TAG) de Hamilton</h1>
         <fieldset className={styles.fieldsets}>
-          <h1 className={styles.tituloTabela}>Tabela de Transtorno de Ansiedade Generalizada (TAG) de Hamilton</h1>
           
           <form onSubmit={handleSubmit}>
             {perguntas.map((pergunta, index) => (
