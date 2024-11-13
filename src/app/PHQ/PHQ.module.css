@@ -60,6 +60,7 @@
     background: #FFFFFF;
     background-size:cover;
     color: #000000;
+    flex-direction: column;
   }
 
   .fieldsets {
@@ -75,8 +76,15 @@
   .tituloTabela {
     font-size: 32px;
     font-weight:900;
-    padding-bottom: 2vh;
+    padding-top: 4vh;
     text-align: center;
+  }
+  
+  .subTituloTabela {
+    font-size: 32px;
+    font-weight:900;
+    padding-bottom: 2vh;
+    text-align: start;
   }
 
   .questao {
