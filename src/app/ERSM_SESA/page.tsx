@@ -1,22 +1,26 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from "./ERSM.module.css"; 
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const ERSM_SESA: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_ersm, setResultado] = useState<number | null>(null);
+  const [risco, setRisco] = useState<string | null>(null);
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState('');
-  const [cns, setCns] = useState<string>('');
+  
+  // Usando useSearchParams para pegar o parâmetro 'cns' da URL
+  const searchParams = useSearchParams();
+  const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
 
-  const valoresSim = [4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 4, 10, 4, 6, 8, 4, 4, 4, 8, 8, 6, 8, 2, 10, 8, 8, 8, 6, 8, 4, 4, 4, 4, 8, 2, 5, 4, 4, 4, 4, 4, 2, 6, 6, 4, 2, 2, 4, 6, 2];
-
+  const valoresSim = [4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 4, 10, 4, 6, 8, 4, 4, 4, 8, 8, 6, 8, 2, 10, 8, 8, 8, 6, 8, 4, 4, 4, 4, 8, 2, 6, 4, 4, 4, 4, 4, 2, 6, 6, 4, 2, 2, 4, 6, 2];
+  let questionIndex = 0; // índice absoluto
+  
   const perguntas= {
     G1: [
       "1. Ansiedade ou medo persistente, sem causa ou explicação definida, com manifestações como sudorese, tremor, taquicardia, sintomas digestivos e/ou episódios de sensação de morte iminente, de enlouquecer ou de perder o controle:",
@@ -134,18 +138,9 @@ const ERSM_SESA: React.FC = () => {
   }
 
   useEffect(() => {
-    const fetchCns = async () => {
-      const userId = auth.currentUser?.uid;
-      if (userId) {
-        const userDoc = await getDoc(doc(db, "usuarios", userId));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setCns(userData?.cns || '');
-        }
-      }
-    };
-    fetchCns();
-  }, []);
+    // Verifique se o 'cns' foi carregado corretamente
+    console.log(cns);
+  }, [cns]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -155,20 +150,29 @@ const ERSM_SESA: React.FC = () => {
     }));
   };
 
+  const calcularRisco = (pontos: number): string => {
+    if (pontos >= 0 && pontos <= 40) return "Baixo Risco";
+    if (pontos >= 42 && pontos <= 70) return "Médio Risco";
+    if (pontos >= 72 && pontos <= 240) return "Alto Risco";
+    return "Indefinido";
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
+    const riscoCalculado = calcularRisco(pontos);
     setResultado(pontos);
+    setRisco(riscoCalculado);
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
       return;
     }
 
-    await salvarResultado(cns,"ERSM_SESA", pontos);
+    await salvarResultado(cns,"ERSM_SESA", pontos, riscoCalculado);
 
-    router.push('/Historico');
+    router.push(`/Historico?cns=${cns}`);
   };
 
   const handleLogout = async () => {
@@ -186,8 +190,8 @@ const ERSM_SESA: React.FC = () => {
         <h1 className={styles.title}>Risco Saúde Mental</h1>
           <nav className={styles.nav}>
             <ul>
-              <li><a href="/Historico">Histórico</a></li>
-              <li><a href="/PHQ">Novo Teste</a></li>
+              <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
+              <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
               <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
             </ul>
           </nav>
@@ -197,29 +201,30 @@ const ERSM_SESA: React.FC = () => {
           
         <form onSubmit={handleSubmit}>
         <h1 className={styles.tituloTabela}>Tabela ERSM</h1>
-          {Object.entries(perguntas).map(([grupo, questoes], groupIndex) => (
-            <fieldset key={grupo} className={styles.grupoFieldset}>
-              <h2 className={styles.grupoTitulo}>{`Grupo ${groupIndex + 1}`}</h2>
-              
-              {questoes.map((pergunta, index) => (
-                <div key={`${grupo}-${index}`} className={styles.questao}>
-                  <p>{pergunta}</p>
-                  {["Sim", "Não"].map((valor, valorIndex) => (
-                    <label className={styles.label} key={`${grupo}-${index}-${valorIndex}`}>
-                      <input 
-                        className={styles.input}
-                        type="radio"
-                        name={`${grupo}-${index}`}
-                        value={valor === "Sim" ? valoresSim[index] : 0}
-                        onChange={handleChange}
-                      /> 
-                      {valor}
-                    </label>
-                  ))}
-                </div>
-              ))}
-            </fieldset>
-          ))}
+
+            {Object.entries(perguntas).map(([grupo, questoes], groupIndex) => (
+              <fieldset key={grupo} className={styles.grupoFieldset}>
+                <h2 className={styles.grupoTitulo}>{`Grupo ${groupIndex + 1}`}</h2>
+                
+                {questoes.map((pergunta, index) => (
+                  <div key={`${grupo}-${index}`} className={styles.questao}>
+                    <p>{pergunta}</p>
+                    {["Sim", "Não"].map((valor, valorIndex) => (
+                      <label className={styles.label} key={`${grupo}-${index}-${valorIndex}`}>
+                        <input 
+                          className={styles.input}
+                          type="radio"
+                          name={`${grupo}-${index}`}
+                          value={valor === "Sim" ? valoresSim[questionIndex++] : 0}
+                          onChange={handleChange}
+                        /> 
+                        {valor}
+                      </label>
+                    ))}
+                  </div>
+                ))}
+              </fieldset>
+            ))}
           
           <div className={styles.buttonContainer}>
             <button className={styles.button} type="submit">Finalizar Teste</button>

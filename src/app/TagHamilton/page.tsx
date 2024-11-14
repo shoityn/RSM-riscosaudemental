@@ -1,19 +1,21 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from "./TagHamilton.module.css";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
-import { doc, setDoc, getDoc } from "firebase/firestore";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const TagHamilton: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_tag, setResultado] = useState<number | null>(null);
+  const [risco, setRisco] = useState<string | null>(null);
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState('');
-  const [cns, setCns] = useState<string>('');
+
+    // Usando useSearchParams para pegar o parâmetro 'cns' da URL
+    const searchParams = useSearchParams();
+    const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
 
   const perguntas = [
     {
@@ -75,18 +77,9 @@ const TagHamilton: React.FC = () => {
   ];
 
   useEffect(() => {
-    const fetchCns = async () => {
-      const userId = auth.currentUser?.uid;
-      if (userId) {
-        const userDoc = await getDoc(doc(db, "usuarios", userId));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setCns(userData?.cns || '');
-        }
-      }
-    };
-    fetchCns();
-  }, []);
+    // Verifique se o 'cns' foi carregado corretamente
+    console.log(cns);
+  }, [cns]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -96,20 +89,29 @@ const TagHamilton: React.FC = () => {
     }));
   };
 
+  const calcularRisco = (pontos: number): string => {
+    if (pontos >= 0 && pontos <= 18) return "Baixo Risco";
+    if (pontos >= 19 && pontos <= 37) return "Médio Risco";
+    if (pontos >= 38 && pontos <= 56) return "Alto Risco";
+    return "Indefinido";
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
+    const riscoCalculado = calcularRisco(pontos);
     setResultado(pontos);
+    setRisco(riscoCalculado);
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
       return;
     }
 
-    await salvarResultado(cns,"TagHamilton", pontos);
+    await salvarResultado(cns,"TagHamilton", pontos,riscoCalculado);
 
-    router.push('/ERSM_SESA');
+    router.push(`/ERSM_SESA?cns=${cns}`);
   }; 
 
   const handleLogout = async () => {
@@ -127,8 +129,8 @@ const TagHamilton: React.FC = () => {
             <h1 className={styles.title}>Risco Saúde Mental</h1>
             <nav className={styles.nav}>
               <ul>
-                <li><a href="/Historico">Histórico</a></li>
-                <li><a href="/PHQ">Novo Teste</a></li>
+                <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
+                <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
                 <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
               </ul>
             </nav>

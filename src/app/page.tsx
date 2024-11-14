@@ -28,6 +28,18 @@ const Home: React.FC = () => {
       return;
     }
 
+    //Código para salvar com Id automático
+    // try {
+    //   const docRef = await addDoc(collection(db, "usuarios"), {
+    //     cns: cns,    
+    //   });
+    //   console.log("Document written with ID: ", docRef.id);
+    // } catch (e) {
+    //   console.error("Error adding document: ", e);
+    // }
+
+    //TODO primeiro fazer o hashcode do CNS
+
     try {
       const userDocRef = doc(db, "usuarios", cns);
       const userDocSnap = await getDoc(userDocRef);

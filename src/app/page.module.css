@@ -60,15 +60,17 @@
 }
 
 .header {
-  position:sticky;
   height: 9vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background-color: #06104D;
-  color: white;
+  color: #ffffff;
 }
 
 .title {
-  padding-top: 20px;
-  margin-left: 10%;
+  padding-left: 10%;
   font-size: 32px;
-  align-items: center;
+  font-weight: bold;
+  margin: 0;
 }
