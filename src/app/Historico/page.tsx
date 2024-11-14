@@ -5,38 +5,46 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from "./Historico.module.css";
 
 const Historico: React.FC = () => {
   const [resultados, setResultados] = useState<{ cns: string; data: string; testes: { nome: string; valor: number; risco: string }[] }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  // Usando useSearchParams para pegar o parâmetro 'cns' da URL
+  const searchParams = useSearchParams();
+  const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
   
   useEffect(() => {
+    console.log("CNS na URL:", cns);  // Verifique se o cns está correto
     const carregarResultados = async () => {
-      const cnsAtual = sessionStorage.getItem('cns');
-  
-      if (!cnsAtual) {
-        router.push('/');
+      if (!cns) {
+        console.error("CNS não encontrado na URL.");
         return;
       }
       
       try {
-        const resultadosQuery = query(collection(db, "resultados"), where("cns", "==", cnsAtual));
+        const resultadosQuery = query(collection(db, "resultados"), where("cns", "==", cns));
         const querySnapshot = await getDocs(resultadosQuery);
+        console.log("QuerySnapshot:", querySnapshot);  // Verifique o que é retornado pela consulta
         
         const resultadosCarregados = querySnapshot.docs.map(doc => ({
           cns: doc.data().cns,
-          data: doc.data().data.toDate().toLocaleDateString(),
+          data: doc.data().data?.toDate ? doc.data().data.toDate().toLocaleDateString() : "Data não disponível",
           testes: [
-            { nome: "PHQ", valor: doc.data().PHQ_valor, risco: doc.data().PHQ_risco },
-            { nome: "TagHamilton", valor: doc.data().TagHamilton_valor, risco: doc.data().TagHamilton_risco },
-            { nome: "ERSM_SESA", valor: doc.data().ERSM_SESA_valor, risco: doc.data().ERSM_SESA_risco }
+            { nome: "PHQ", valor: doc.data().PHQ_valor || 0, risco: doc.data().PHQ_risco || "Indefinido" },
+            { nome: "TagHamilton", valor: doc.data().TagHamilton_valor || 0, risco: doc.data().TagHamilton_risco || "Indefinido" },
+            { nome: "ERSM_SESA", valor: doc.data().ERSM_SESA_valor || 0, risco: doc.data().ERSM_SESA_risco || "Indefinido" }
           ]
         }));
         
-        setResultados(resultadosCarregados);
+        if (resultadosCarregados.length > 0) {
+          setResultados(resultadosCarregados);
+        } else {
+          console.log("Nenhum resultado encontrado para o CNS fornecido.");
+        }
       } catch (error) {
         console.error("Erro ao carregar resultados:", error);
       } finally {
@@ -45,8 +53,8 @@ const Historico: React.FC = () => {
     };
   
     carregarResultados();
-  }, []);
-
+  }, [cns]);
+  
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -62,8 +70,8 @@ const Historico: React.FC = () => {
         <h1 className={styles.title}>Risco Saúde Mental</h1>
         <nav className={styles.nav}>
           <ul>
-            <li><a href="/Historico">Histórico</a></li>
-            <li><a href="/PHQ">Novo Teste</a></li>
+            <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
+            <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
             <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
           </ul>
         </nav>

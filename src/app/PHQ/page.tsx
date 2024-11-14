@@ -1,18 +1,21 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from "./PHQ.module.css";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const PHQ: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_phq, setResultado] = useState<number | null>(null);
+  const [risco, setRisco] = useState<string | null>(null);
   const router = useRouter();
-  const [cns, setCns] = useState<string>('');
+
+    // Usando useSearchParams para pegar o parâmetro 'cns' da URL
+    const searchParams = useSearchParams();
+    const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
 
   const perguntas = [
     "1. Pouco interesse ou pouco prazer em fazer as coisas:",
@@ -35,18 +38,9 @@ const PHQ: React.FC = () => {
   ];
 
   useEffect(() => {
-    const fetchCns = async () => {
-      const userId = auth.currentUser?.uid;
-      if (userId) {
-        const userDoc = await getDoc(doc(db, "usuarios", userId));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setCns(userData?.cns || ''); // Obtendo o CNS do Firestore
-        }
-      }
-    };
-    fetchCns();
-  }, []);
+    // Verifique se o 'cns' foi carregado corretamente
+    console.log(cns);
+  }, [cns]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,11 +50,20 @@ const PHQ: React.FC = () => {
     }));
   };
 
+  const calcularRisco = (pontos: number): string => {
+    if (pontos >= 0 && pontos <= 9) return "Baixo Risco";
+    if (pontos >= 10 && pontos <= 19) return "Médio Risco";
+    if (pontos >= 20 && pontos <= 27) return "Alto Risco";
+    return "Indefinido";
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
+    const riscoCalculado = calcularRisco(pontos);
     setResultado(pontos);
+    setRisco(riscoCalculado);
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
@@ -68,9 +71,9 @@ const PHQ: React.FC = () => {
     }
   
     try {
-      await salvarResultado(cns, "PHQ", pontos);
+      await salvarResultado(cns, "PHQ", pontos, riscoCalculado);
     
-      router.push('/TagHamilton');
+      router.push(`/TagHamilton?cns=${cns}`);
     } catch (error) {
       console.error("Erro ao salvar o resultado:", error);
     }
@@ -91,8 +94,8 @@ const PHQ: React.FC = () => {
         <h1 className={styles.title}>Risco Saúde Mental</h1>
         <nav className={styles.nav}>
           <ul>
-            <li><a href="/Historico">Histórico</a></li>
-            <li><a href="/PHQ">Novo Teste</a></li>
+            <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
+            <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
             <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
           </ul>
         </nav>
