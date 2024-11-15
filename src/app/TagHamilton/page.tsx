@@ -99,6 +99,11 @@ const TagHamilton: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (Object.keys(respostas).length < perguntas.length) {
+      console.error("Por favor, responda todas as perguntas.");
+      return;
+    }
+
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     const riscoCalculado = calcularRisco(pontos);
     setResultado(pontos);

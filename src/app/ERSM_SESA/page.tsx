@@ -12,7 +12,6 @@ const ERSM_SESA: React.FC = () => {
   const [resultado_ersm, setResultado] = useState<number | null>(null);
   const [risco, setRisco] = useState<string | null>(null);
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState('');
   
   // Usando useSearchParams para pegar o parâmetro 'cns' da URL
   const searchParams = useSearchParams();

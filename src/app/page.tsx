@@ -7,6 +7,15 @@ import { db } from "./firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import styles from "./page.module.css";
 
+// Função para gerar o hash SHA-256 de um CNS
+const generateHash = async (input: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+};
+
 const Home: React.FC = () => {
   const [cns, setCns] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -41,17 +50,18 @@ const Home: React.FC = () => {
     //TODO primeiro fazer o hashcode do CNS
 
     try {
-      const userDocRef = doc(db, "usuarios", cns);
+      const hashedCns = await generateHash(cns);
+      const userDocRef = doc(db, "usuarios", hashedCns);
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
-        router.push(`/PHQ?cns=${cns}`);
+        router.push(`/PHQ?cns=${hashedCns}`);
       } else {
         await setDoc(userDocRef, {
           cns: cns,
         });
 
-        router.push(`/PHQ?cns=${cns}`);
+        router.push(`/PHQ?cns=${hashedCns}`);
       }
     } catch (error) {
       console.error("Erro ao salvar o CNS:", error);
