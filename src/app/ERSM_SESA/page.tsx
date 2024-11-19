@@ -10,7 +10,7 @@ import { salvarResultado } from "../lib/firebaseUtils";
 const ERSM_SESA: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_ersm, setResultado] = useState<number | null>(null);
-  const [risco, setRisco] = useState<string | null>(null);
+  const [risco_ersm, setRisco] = useState<string | null>(null);
   const router = useRouter();
   
   // Usando useSearchParams para pegar o parâmetro 'cns' da URL
@@ -160,16 +160,16 @@ const ERSM_SESA: React.FC = () => {
     e.preventDefault();
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
-    const riscoCalculado = calcularRisco(pontos);
+    const ERSM_SESA_risco = calcularRisco(pontos);
     setResultado(pontos);
-    setRisco(riscoCalculado);
+    setRisco(ERSM_SESA_risco);
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
       return;
     }
 
-    await salvarResultado(cns,"ERSM_SESA", pontos, riscoCalculado);
+    await salvarResultado(cns,"ERSM_SESA", pontos, ERSM_SESA_risco);
 
     router.push(`/Historico?cns=${cns}`);
   };

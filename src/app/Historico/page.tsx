@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from "./Historico.module.css";
@@ -13,12 +13,11 @@ const Historico: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Usando useSearchParams para pegar o parâmetro 'cns' da URL
   const searchParams = useSearchParams();
-  const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
+  const cns = searchParams.get('cns');
   
   useEffect(() => {
-    console.log("CNS na URL:", cns);  // Verifique se o cns está correto
+    console.log("CNS na URL:", cns); 
     const carregarResultados = async () => {
       if (!cns) {
         console.error("CNS não encontrado na URL.");
@@ -26,19 +25,30 @@ const Historico: React.FC = () => {
       }
       
       try {
-        const resultadosQuery = query(collection(db, "resultados"), where("cns", "==", cns));
+        const resultadosQuery = query(
+          collection(db, "resultados"),
+          where("CNS", "==", cns) 
+        );
         const querySnapshot = await getDocs(resultadosQuery);
-        console.log("QuerySnapshot:", querySnapshot);  // Verifique o que é retornado pela consulta
+        console.log("QuerySnapshot:", querySnapshot);
         
-        const resultadosCarregados = querySnapshot.docs.map(doc => ({
-          cns: doc.data().cns,
-          data: doc.data().data?.toDate ? doc.data().data.toDate().toLocaleDateString() : "Data não disponível",
-          testes: [
-            { nome: "PHQ", valor: doc.data().PHQ_valor || 0, risco: doc.data().PHQ_risco || "Indefinido" },
-            { nome: "TagHamilton", valor: doc.data().TagHamilton_valor || 0, risco: doc.data().TagHamilton_risco || "Indefinido" },
-            { nome: "ERSM_SESA", valor: doc.data().ERSM_SESA_valor || 0, risco: doc.data().ERSM_SESA_risco || "Indefinido" }
-          ]
-        }));
+        const resultadosCarregados = querySnapshot.docs.map(doc => {
+          const dados = doc.data();
+          const resultados = dados.resultados || {};
+          const dataResultado = dados.data instanceof Timestamp ? dados.data.toDate().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : "Data não disponível";
+
+          return {
+            cns: dados.CNS,
+            data: dataResultado,
+            testes: [
+              { nome: "PHQ", valor: resultados.PHQ?.pontuacao || 0, risco: resultados.PHQ?.risco || "Indefinido" },
+              { nome: "TagHamilton", valor: resultados.TagHamilton?.pontuacao || 0, risco: resultados.TagHamilton?.risco || "Indefinido" },
+              { nome: "ERSM_SESA", valor: resultados.ERSM_SESA?.pontuacao || 0, risco: resultados.ERSM_SESA?.risco || "Indefinido" }
+            ]
+          };
+        });
+        
+        console.log("Resultados carregados:", resultadosCarregados);
         
         if (resultadosCarregados.length > 0) {
           setResultados(resultadosCarregados);
@@ -48,7 +58,7 @@ const Historico: React.FC = () => {
       } catch (error) {
         console.error("Erro ao carregar resultados:", error);
       } finally {
-        setIsLoading(false); // Finaliza o carregamento, independentemente do sucesso ou falha
+        setIsLoading(false);
       }
     };
   
