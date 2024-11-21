@@ -1,21 +1,19 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useCns } from '../cnsContext'; // Importando o contexto
 import styles from "./TagHamilton.module.css";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const TagHamilton: React.FC = () => {
+  const { cns } = useCns(); // Pegando o CNS do contexto
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_tag, setResultado] = useState<number | null>(null);
   const [risco_tag, setRisco] = useState<string | null>(null);
   const router = useRouter();
-
-    // Usando useSearchParams para pegar o parâmetro 'cns' da URL
-    const searchParams = useSearchParams();
-    const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
 
   const perguntas = [
     {
@@ -114,10 +112,10 @@ const TagHamilton: React.FC = () => {
       return;
     }
 
-    await salvarResultado(cns,"TagHamilton", pontos,TagHamilton_risco);
+    await salvarResultado(cns, "TagHamilton", pontos, TagHamilton_risco);
 
-    router.push(`/ERSM_SESA?cns=${cns}`);
-  }; 
+    router.push(`/ERSM_SESA`);
+  };
 
   const handleLogout = async () => {
     try {
@@ -129,30 +127,28 @@ const TagHamilton: React.FC = () => {
   };
 
   return (
-    <> 
+    <>
       <header className={styles.header}>
-            <h1 className={styles.title}>Risco Saúde Mental</h1>
-            <nav className={styles.nav}>
-              <ul>
-                <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
-                <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
-                <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
-              </ul>
-            </nav>
+        <h1 className={styles.title}>Risco Saúde Mental</h1>
+        <nav className={styles.nav}>
+          <ul>
+            <li><a onClick={() => router.push("/Historico")}>Histórico</a></li>
+            <li><a onClick={() => router.push("/PHQ")}>Novo Teste</a></li>
+            <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
+          </ul>
+        </nav>
       </header>
 
       <div className={styles.container}>
-      <h1 className={styles.tituloTabela}>Tabela de Transtorno de Ansiedade Generalizada (TAG) de Hamilton</h1>
+        <h1 className={styles.tituloTabela}>Tabela de Transtorno de Ansiedade Generalizada (TAG) de Hamilton</h1>
         <fieldset className={styles.fieldsets}>
-          
           <form onSubmit={handleSubmit}>
             {perguntas.map((pergunta, index) => (
               <div key={index} className={styles.questao}>
                 <strong>{pergunta.titulo}</strong>
                 <p>{pergunta.descricao}</p>
                 {[0, 1, 2, 3, 4].map((valor) => (
-
-                  <label className={styles.label}  key={valor}>
+                  <label className={styles.label} key={valor}>
                     <input className={styles.input}
                       type="radio"
                       name={`pergunta${index + 1}`}
@@ -170,8 +166,8 @@ const TagHamilton: React.FC = () => {
           </form>
         </fieldset>
       </div>
-  </>   
-  ); 
-}; 
+    </>
+  );
+};
 
 export default TagHamilton;

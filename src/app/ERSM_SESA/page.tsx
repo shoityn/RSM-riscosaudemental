@@ -1,21 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from "react";
+import { useRouter } from 'next/navigation';
+import { useCns } from '../cnsContext';
 import styles from "./ERSM.module.css"; 
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { salvarResultado } from "../lib/firebaseUtils";
 
-const ERSM_SESA: React.FC = () => {
+const ERSM_SESA = () => {
+  const { cns } = useCns();
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_ersm, setResultado] = useState<number | null>(null);
   const [risco_ersm, setRisco] = useState<string | null>(null);
   const router = useRouter();
-  
-  // Usando useSearchParams para pegar o parâmetro 'cns' da URL
-  const cns = useSearchParams().get("cns");
   
   const valoresSim = [4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 4, 10, 4, 6, 8, 4, 4, 4, 8, 8, 6, 8, 2, 10, 8, 8, 8, 6, 8, 4, 4, 4, 4, 8, 2, 6, 4, 4, 4, 4, 4, 2, 6, 6, 4, 2, 2, 4, 6, 2];
   let questionIndex = 0; // índice absoluto
@@ -171,7 +169,7 @@ const ERSM_SESA: React.FC = () => {
 
     await salvarResultado(cns,"ERSM_SESA", pontos, ERSM_SESA_risco);
 
-    router.push(`/Historico?cns=${cns}`);
+    router.push(`/Historico`);
   };
 
   const handleLogout = async () => {
@@ -184,13 +182,13 @@ const ERSM_SESA: React.FC = () => {
   };
 
   return (
-    <Suspense fallback={<div>Carregando...</div>}> 
+    <> 
       <header className={styles.header}>
         <h1 className={styles.title}>Risco Saúde Mental</h1>
           <nav className={styles.nav}>
             <ul>
-              <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
-              <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
+              <li><a onClick={() => router.push("/Historico")}>Histórico</a></li>
+              <li><a onClick={() => router.push("/PHQ")}>Novo Teste</a></li>
               <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
             </ul>
           </nav>
@@ -230,7 +228,7 @@ const ERSM_SESA: React.FC = () => {
           </div>
         </form>
       </div>
-  </Suspense> 
+  </> 
   );
 };
 

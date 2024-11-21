@@ -1,46 +1,31 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCns } from '../cnsContext'; 
 import styles from "./PHQ.module.css";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { salvarResultado } from "../lib/firebaseUtils";
 
 const PHQ: React.FC = () => {
+  const { cns } = useCns(); // Pegando o CNS do contexto
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_phq, setResultado] = useState<number | null>(null);
   const [risco_phq, setRisco] = useState<string | null>(null);
   const router = useRouter();
 
-    // Usando useSearchParams para pegar o parâmetro 'cns' da URL
-    const searchParams = useSearchParams();
-    const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
-
   const perguntas = [
     "1. Pouco interesse ou pouco prazer em fazer as coisas:",
-
     "2. Se sentir para baixo, deprimido ou sem perspectiva:",
-
     "3. Dificuldade para pegar no sono ou permanecer dormindo, ou dormir mais do que de costume:",
-
     "4. Se sentir cansado(a) ou com pouca energia:",
-
     "5. Falta de apetite ou comendo demais:",
-
     "6. Se sentir mal contigo mesmo(a) - ou achar que você é um fracasso ou que decepcionou sua família ou você mesmo(a):",
-
     "7. Dificuldade para se concentrar nas coisas, como ler o jornal ou ver televisão:",
-    
     "8. Lentidão para se movimentar ou falar, a ponto das outras pessoas perceberem? Ou o oposto - estar tão agitado(a) ou irrequieto(a) que você fica andando de um lado para o outro muito mais do que de costume:",
-    
     "9. Pensar em se ferir de alguma maneira ou que seria melhor estar morto(a):"
   ];
-
-  useEffect(() => {
-    // Verifique se o 'cns' foi carregado corretamente
-    console.log(cns);
-  }, [cns]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,11 +59,12 @@ const PHQ: React.FC = () => {
       console.error("CNS não encontrado para o usuário");
       return;
     }
-  
+
     try {
       await salvarResultado(cns, "PHQ", pontos, PHQ_risco);
-    
-      router.push(`/TagHamilton?cns=${cns}`);
+
+      // Navegar para a próxima página
+      router.push("/TagHamilton");
     } catch (error) {
       console.error("Erro ao salvar o resultado:", error);
     }
@@ -99,8 +85,8 @@ const PHQ: React.FC = () => {
         <h1 className={styles.title}>Risco Saúde Mental</h1>
         <nav className={styles.nav}>
           <ul>
-            <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
-            <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
+            <li><a onClick={() => router.push("/Historico")}>Histórico</a></li>
+            <li><a onClick={() => router.push("/PHQ")}>Novo Teste</a></li>
             <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
           </ul>
         </nav>

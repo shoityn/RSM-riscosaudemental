@@ -1,23 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useCns } from '../cnsContext';
 import { signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { collection, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import styles from "./historico.module.css";
 
 const Historico: React.FC = () => {
+  const { cns } = useCns();
   const [resultados, setResultados] = useState<{ cns: string; data: string; testes: { nome: string; valor: number; risco: string }[] }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const searchParams = useSearchParams();
-  const cns = searchParams.get('cns');
-  
   useEffect(() => {
-    console.log("CNS na URL:", cns); 
+  
     const carregarResultados = async () => {
       if (!cns) {
         console.error("CNS não encontrado na URL.");
@@ -80,8 +79,8 @@ const Historico: React.FC = () => {
         <h1 className={styles.title}>Risco Saúde Mental</h1>
         <nav className={styles.nav}>
           <ul>
-            <li><a href={`/Historico?cns=${cns}`}>Histórico</a></li>
-            <li><a href={`/PHQ?cns=${cns}`}>Novo Teste</a></li>
+            <li><a onClick={() => router.push("/Historico")}>Histórico</a></li>
+            <li><a onClick={() => router.push("/PHQ")}>Novo Teste</a></li>
             <li onClick={handleLogout} style={{ cursor: 'pointer' }}>Sair</li>
           </ul>
         </nav>
