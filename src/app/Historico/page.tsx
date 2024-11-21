@@ -18,10 +18,6 @@ const Historico: React.FC = () => {
   useEffect(() => {
   
     const carregarResultados = async () => {
-      if (!cns) {
-        console.error("CNS não encontrado na URL.");
-        return;
-      }
       
       try {
         const resultadosQuery = query(
