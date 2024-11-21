@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from "react";
 import styles from "./ERSM.module.css"; 
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
@@ -14,9 +15,8 @@ const ERSM_SESA: React.FC = () => {
   const router = useRouter();
   
   // Usando useSearchParams para pegar o parâmetro 'cns' da URL
-  const searchParams = useSearchParams();
-  const cns = searchParams.get('cns'); // Aqui pegamos o parâmetro da URL
-
+  const cns = useSearchParams().get("cns");
+  
   const valoresSim = [4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 4, 10, 4, 6, 8, 4, 4, 4, 8, 8, 6, 8, 2, 10, 8, 8, 8, 6, 8, 4, 4, 4, 4, 8, 2, 6, 4, 4, 4, 4, 4, 2, 6, 6, 4, 2, 2, 4, 6, 2];
   let questionIndex = 0; // índice absoluto
   
@@ -184,7 +184,7 @@ const ERSM_SESA: React.FC = () => {
   };
 
   return (
-    <> 
+    <Suspense fallback={<div>Carregando...</div>}> 
       <header className={styles.header}>
         <h1 className={styles.title}>Risco Saúde Mental</h1>
           <nav className={styles.nav}>
@@ -230,7 +230,7 @@ const ERSM_SESA: React.FC = () => {
           </div>
         </form>
       </div>
-  </> 
+  </Suspense> 
   );
 };
 
