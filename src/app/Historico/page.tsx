@@ -6,7 +6,7 @@ import { auth } from "../firebaseConfig";
 import { collection, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useRouter, useSearchParams } from 'next/navigation';
-import styles from "./Historico.module.css";
+import styles from "./historico.module.css";
 
 const Historico: React.FC = () => {
   const [resultados, setResultados] = useState<{ cns: string; data: string; testes: { nome: string; valor: number; risco: string }[] }[]>([]);
