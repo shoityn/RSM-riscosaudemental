@@ -13,6 +13,7 @@ const TagHamilton: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_tag, setResultado] = useState<number | null>(null);
   const [risco_tag, setRisco] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState<boolean>(false);
   const router = useRouter();
 
   const perguntas = [
@@ -96,11 +97,7 @@ const TagHamilton: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (Object.keys(respostas).length < perguntas.length) {
-      console.error("Por favor, responda todas as perguntas.");
-      return;
-    }
+    setCarregando(true);
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     const TagHamilton_risco = calcularRisco(pontos);
@@ -109,6 +106,7 @@ const TagHamilton: React.FC = () => {
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
+      setCarregando(false);
       return;
     }
 
@@ -154,6 +152,7 @@ const TagHamilton: React.FC = () => {
                       name={`pergunta${index + 1}`}
                       value={valor}
                       onChange={handleChange}
+                      defaultChecked={valor === 0}
                     /> {valor}
                   </label>
                 ))}
@@ -161,7 +160,9 @@ const TagHamilton: React.FC = () => {
             ))}
 
             <div className={styles.buttonContainer}>
-              <button className={styles.button} type="submit">Próxima Pergunta</button>
+            <button className={styles.button} type="submit" disabled={carregando}>
+                {carregando ? "Aguarde um momento..." : "Próxima Pergunta"}
+              </button>
             </div>
           </form>
         </fieldset>
