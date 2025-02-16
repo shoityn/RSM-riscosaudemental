@@ -54,8 +54,8 @@
 /*BODY*/
 .container {
     position: relative;
+    height: 91vh;
     display: flex;
-    justify-content: center;
     align-items: center;
     background: #FFFFFF;
     background-size:cover;
