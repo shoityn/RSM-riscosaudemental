@@ -13,6 +13,7 @@ const PHQ: React.FC = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_phq, setResultado] = useState<number | null>(null);
   const [risco_phq, setRisco] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
   const router = useRouter();
 
   const perguntas = [
@@ -44,11 +45,7 @@ const PHQ: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (Object.keys(respostas).length < perguntas.length) {
-      console.error("Por favor, responda todas as perguntas");
-      return;
-    }
+    setCarregando(true);
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     const PHQ_risco = calcularRisco(pontos);
@@ -57,16 +54,17 @@ const PHQ: React.FC = () => {
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
+      setCarregando(false);
       return;
     }
 
     try {
       await salvarResultado(cns, "PHQ", pontos, PHQ_risco);
-
       // Navegar para a próxima página
       router.push("/TagHamilton");
     } catch (error) {
       console.error("Erro ao salvar o resultado:", error);
+      setCarregando(false);
     }
   };
 
@@ -111,6 +109,7 @@ const PHQ: React.FC = () => {
                       name={`pergunta${index + 1}`}
                       value={idx}
                       onChange={handleChange}
+                      defaultChecked={idx === 0}
                     /> {valor}
                   </label>
                 ))}
@@ -118,7 +117,9 @@ const PHQ: React.FC = () => {
             ))}
 
             <div className={styles.buttonContainer}>
-              <button className={styles.button} type="submit">Próxima Pergunta</button>
+            <button className={styles.button} type="submit" disabled={carregando}>
+                {carregando ? "Aguarde um momento..." : "Próxima Pergunta"}
+              </button>
             </div>
           </form>
         </fieldset>
