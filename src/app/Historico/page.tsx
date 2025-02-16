@@ -17,8 +17,7 @@ const Historico: React.FC = () => {
 
   useEffect(() => {
   
-    const carregarResultados = async () => {
-      
+    const carregarResultados = async () => {    
       try {
         const resultadosQuery = query(
           collection(db, "resultados"),
