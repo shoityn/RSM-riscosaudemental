@@ -51,10 +51,10 @@ const Home: React.FC = () => {
       setCns(inputCns);
 
       if (userDocSnap.exists()) {
-        router.push(`/PHQ?cns=${hashedCns}`);
+        router.push("/PHQ");
       } else {
         await setDoc(userDocRef, { cns: inputCns });
-        router.push(`/PHQ?cns=${hashedCns}`);
+        router.push("/PHQ");
       }
     } catch (error) {
       console.error("Erro ao salvar o CNS:", error);
