@@ -13,6 +13,7 @@ const ERSM_SESA = () => {
   const [respostas, setRespostas] = useState<{ [key: string]: number }>({});
   const [resultado_ersm, setResultado] = useState<number | null>(null);
   const [risco_ersm, setRisco] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState<boolean>(false);
   const router = useRouter();
   
   const valoresSim = [4, 2, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 4, 10, 4, 6, 8, 4, 4, 4, 8, 8, 6, 8, 2, 10, 8, 8, 8, 6, 8, 4, 4, 4, 4, 8, 2, 6, 4, 4, 4, 4, 4, 2, 6, 6, 4, 2, 2, 4, 6, 2];
@@ -156,6 +157,7 @@ const ERSM_SESA = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setCarregando(true);
 
     const pontos = Object.values(respostas).reduce((total, valor) => total + (valor || 0), 0);
     const ERSM_SESA_risco = calcularRisco(pontos);
@@ -164,6 +166,7 @@ const ERSM_SESA = () => {
 
     if (!cns) {
       console.error("CNS não encontrado para o usuário");
+      setCarregando(false);
       return;
     }
 
@@ -214,6 +217,7 @@ const ERSM_SESA = () => {
                           name={`${grupo}-${index}`}
                           value={valor === "Sim" ? valoresSim[questionIndex++] : 0}
                           onChange={handleChange}
+                          defaultChecked={valor === "Não"}
                         /> 
                         {valor}
                       </label>
@@ -224,7 +228,9 @@ const ERSM_SESA = () => {
             ))}
           
           <div className={styles.buttonContainer}>
-            <button className={styles.button} type="submit">Finalizar Teste</button>
+            <button className={styles.button} type="submit" disabled={carregando}>
+                {carregando ? "Aguarde um momento..." : "Finalizar Teste"}
+              </button>
           </div>
         </form>
       </div>
