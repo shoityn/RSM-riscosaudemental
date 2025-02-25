@@ -1,115 +1,115 @@
 .header {
-    height: 9vh;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #06104D;
-    color: #ffffff;
+  height: 9vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #06104D;
+  color: #ffffff;
 }
-  
+
 .title {
-    padding-left: 10%;
-    font-size: 32px;
-    font-weight: bold;
-    margin: 0;
+  padding-left: 10%;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0;
 }
-  
+
 .nav {
-    padding-right: 10%;
+  padding-right: 10%;
 }
 
 .nav ul {
-    list-style: none;
-    display: flex;
-    gap: 40px;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 40px;
+  margin: 0;
+  padding: 0;
 }
-  
+
 .nav a {
-    color: #ffffff;
-    text-decoration: none;
+  color: #ffffff;
+  text-decoration: none;
 }
-  
+
 .nav a:hover {
-    color: #bebebe;
+  color: #bebebe;
 }
-  
+
 .nav li {
-    cursor: pointer;
-    font-size: 24px;
-    font-weight: bold;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: bold;
 }
-  
+
 .nav li:last-child {
-    color: #ff4d4f;
-    font-weight: bold;
-    font-size: 24px;
+  color: #ff4d4f;
+  font-weight: bold;
+  font-size: 24px;
 }
 
 .nav li:last-child:hover {
-    color: #b62e31;
+  color: #b62e31;
 }
 
 /*BODY*/
 .container {
-    position: relative;
-    height: 91vh;
-    display: flex;
-    align-items: center;
-    background: #FFFFFF;
-    background-size:cover;
-    flex-direction: column;
-  }
-  
-  .tituloHistorico {
-    font-size: 40px;
-    font-weight: bold;
-    padding: 40px;
-    color: #E14E0F;
-    text-align: center;
-  }
-  
-  .emptyMessage {
-    font-size: 60px;
-    color: #000000;
-    text-align: center;
-  }
-  
-  .historicoCard {
-    width: 50%;
-    background-color: #FFFFFF;
-    color: #000000;
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
-    padding: 20px;
-    margin-bottom: 40px;
-  }
-  
-  .headerCard {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .headerCard p {
-    margin: 0;
-  }
-  
-  .data {
-    font-weight: normal;
-    font-size: 20px;
-    color: #666666;
-  }
-  
-  .resultados {
-    margin-top: 10px;
-    padding: 10px;
-  }
-  
-  .resultados p {
-    margin: 5px 0;
-    font-size: 20px;
-  }
+  position: relative;
+  min-height: 91vh;
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  background-size:cover;
+  flex-direction: column;
+}
+
+.tituloHistorico {
+  font-size: 40px;
+  font-weight: bold;
+  padding: 40px;
+  color: #E14E0F;
+  text-align: center;
+}
+
+.emptyMessage {
+  font-size: 60px;
+  color: #000000;
+  text-align: center;
+}
+
+.historicoCard {
+  width: 50%;
+  background-color: #FFFFFF;
+  color: #000000;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  padding: 20px;
+  margin-bottom: 40px;
+}
+
+.headerCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.headerCard p {
+  margin: 0;
+}
+
+.data {
+  font-weight: normal;
+  font-size: 20px;
+  color: #666666;
+}
+
+.resultados {
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.resultados p {
+  margin: 5px 0;
+  font-size: 20px;
+}
