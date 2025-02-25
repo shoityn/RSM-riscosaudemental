@@ -229,7 +229,7 @@ const ERSM_SESA = () => {
           
           <div className={styles.buttonContainer}>
             <button className={styles.button} type="submit" disabled={carregando}>
-                {carregando ? "Aguarde um momento..." : "Finalizar Teste"}
+                {carregando ? "Aguarde..." : "Finalizar Teste"}
               </button>
           </div>
         </form>

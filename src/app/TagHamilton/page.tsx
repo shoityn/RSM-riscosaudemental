@@ -161,7 +161,7 @@ const TagHamilton: React.FC = () => {
 
             <div className={styles.buttonContainer}>
             <button className={styles.button} type="submit" disabled={carregando}>
-                {carregando ? "Aguarde um momento..." : "Próxima Pergunta"}
+                {carregando ? "Aguarde..." : "Próxima Pergunta"}
               </button>
             </div>
           </form>
